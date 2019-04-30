@@ -102,8 +102,8 @@ bot.action(/^(\d+)$/gi, async ctx => {
     try {
 
         const msg = {
-            userId  : ctx.update.callback_query.message.from.id,
-            name    : ctx.update.callback_query.message.from.first_name,
+            userId  : ctx.update.callback_query.from.id,
+            name    : ctx.update.callback_query.from.first_name,
         }
 
         const chosenTerminalId = await ctx.update.callback_query.data
@@ -125,8 +125,8 @@ bot.action(/location (.+)/, async ctx => {
     try {
 
         const msg = {
-            userId  : ctx.update.callback_query.message.from.id,
-            name    : ctx.update.callback_query.message.from.first_name,
+            userId  : ctx.update.callback_query.from.id,
+            name    : ctx.update.callback_query.from.first_name,
         }
         
         const terminalId = ctx.match[1]

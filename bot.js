@@ -14,6 +14,10 @@ const fs = require('fs')
 
 const bot = new Telegraf(env.token)
 
+const { 
+    log 
+} = require('./util/loggerTool')
+
 const {
     getLoginToken, 
     getTerminals,
@@ -33,8 +37,12 @@ const auth = {
 }
 
 bot.start(async ctx => {
-    const name = ctx.update.message.from.first_name
-    ctx.reply(`Seja bem vindo, ${name}!\nAvise se precisar de /ajuda`)
+    const msg = {
+        userId  : ctx.update.message.from.id,
+        name    : ctx.update.message.from.first_name,
+    }
+    log('start', 'info', `User ${msg.name}, id ${msg.userId} have started Bot`)
+    ctx.reply(`Seja bem vindo, ${msg.name}!\nAvise se precisar de /ajuda`)
 })
 
 bot.command('ajuda', async ctx => ctx.reply('/ajuda: opções'
@@ -45,31 +53,94 @@ bot.command('ajuda', async ctx => ctx.reply('/ajuda: opções'
 bot.hears(/\/op\d+/i, async ctx => ctx.reply('Resposta padrão para comandos genéricos'))
 
 bot.hears(/\/terminais/gi, async ctx => {
-    const token = await getLoginToken(auth)
-    const terminalsList = await getTerminals(token)
+    try {
+        const msg = {
+            userId  : ctx.update.message.from.id,
+            name    : ctx.update.message.from.first_name,
+        }
+        log('hearsTerminalList', 'info', `User ${msg.name}, id ${msg.userId} asked for terminal list`)
+    
+        const token = await getLoginToken(auth)
+        const terminalsList = await getTerminals(token)
+    
+        const btnTerminals = await listTerminals(terminalsList.data)
+    
+        await ctx.reply("Terminais cadastrados:", btnTerminals)
+    } catch (error) {
+        log('hearsTerminalList', 'error', `${error}`)
+        ctx.reply(`${error}`)
+    }
+})
 
-    const btnTerminals = await listTerminals(terminalsList.data)
+bot.hears(/^(\d+)$/gi, async ctx => {
+    try {
+        const msg = {
+            userId      : ctx.update.message.from.id,
+            name        : ctx.update.message.from.first_name,
+            terminalId  : ctx.update.message.text
+        }
+        log('hearsTerminalId', 'info', `User ${msg.name}, id ${msg.userId} asked for terminal ${msg.terminalId}`)
+        
+        const token = await getLoginToken(auth)
+        const terminalStatusList = await getTerminalStatus(token, msg.terminalId)
 
-    await ctx.reply("Terminais cadastrados:", btnTerminals)
+        if (terminalStatusList.data.length === 0) {
+            log('hearsTerminalId', 'info', `Terminal id ${msg.terminalId} not found`)
+            ctx.reply('Terminal não encontrado')
+        } else {
+            log('hearsTerminalId', 'info', `Sending status`)
+            await showTerminalStatus(ctx, terminalStatusList.data, true)
+        }
+
+    } catch (error) {
+        log('hearsTerminalId', 'error', `${error}`)
+        ctx.reply(`${error}`)
+    }
 })
 
 bot.action(/^(\d+)$/gi, async ctx => {
-    const chosenTerminalId = await ctx.update.callback_query.data
+    try {
 
-    const token = await getLoginToken(auth)
-    const terminalStatusList = await getTerminalStatus(token, chosenTerminalId)
-    
-    await showTerminalStatus(ctx, terminalStatusList.data, true)
-    // await ctx.reply(`Terminal escolhido: ${chosenTerminalId}`)
+        const msg = {
+            userId  : ctx.update.callback_query.message.from.id,
+            name    : ctx.update.callback_query.message.from.first_name,
+        }
+
+        const chosenTerminalId = await ctx.update.callback_query.data
+
+        log('actionTerminalStatus', 'info', `User ${msg.name}, id ${msg.userId} asked for ${chosenTerminalId} status.`)
+
+        const token = await getLoginToken(auth)
+        const terminalStatusList = await getTerminalStatus(token, chosenTerminalId)
+        
+        await showTerminalStatus(ctx, terminalStatusList.data, true)
+        // await ctx.reply(`Terminal escolhido: ${chosenTerminalId}`)
+    } catch (error) {
+        log('actionTerminalStatus', 'error', `${error}`)
+        ctx.reply(`${error}`)
+    }
 })
 
 bot.action(/location (.+)/, async ctx => {
-    const terminalId = ctx.match[1]
-    
-    const token = await getLoginToken(auth)
-    const terminalLocation = await getTerminalLocation(token, terminalId)
+    try {
 
-    await showTerminalLocation(ctx, terminalLocation.data, true)
+        const msg = {
+            userId  : ctx.update.callback_query.message.from.id,
+            name    : ctx.update.callback_query.message.from.first_name,
+        }
+        
+        const terminalId = ctx.match[1]
+        
+        log('actionTerminalStatus', 'info', `User ${msg.name}, id ${msg.userId} asked for ${terminalId} location.`)
+
+        const token = await getLoginToken(auth)
+        const terminalLocation = await getTerminalLocation(token, terminalId)
+    
+        await showTerminalLocation(ctx, terminalLocation.data, true)
+    } catch (error) {
+        log('actionTerminalLocation', 'error', `${error}`)
+        ctx.reply(`${error}`)
+    }
 })
 
 bot.startPolling()

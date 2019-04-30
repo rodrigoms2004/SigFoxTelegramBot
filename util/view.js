@@ -33,6 +33,7 @@ const showTerminalStatus = async(ctx, data, newMsg = false) => {
     if(data !== null) {
 
         let msg = `
+            <b>STATUS</b>
             <b>Status Id: </b>${data[0].statusId}
             <b>Terminal Id: </b>${data[0].terminal_id}
             <b>Date: </b>${formatData(data[0].timeStamp).split(/\ /)[0]}
@@ -58,6 +59,7 @@ const showTerminalLocation = async(ctx, data, newMsg = false) => {
     if(data !== null) {
 
         let msg = `
+            <b>LOCATION</b>
             <b>Location Id: </b>${data[0].id}
             <b>Terminal Id: </b>${data[0].deviceId}
             <b>Date: </b>${formatData(data[0].timeStamp).split(/\ /)[0]}
